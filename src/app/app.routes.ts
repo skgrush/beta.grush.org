@@ -26,7 +26,19 @@ export const routes: Routes = [
         },
         loadComponent: () => import('./pages/projects/cavern-seer/cavern-seer.component'),
       },
+      {
+        path: '**',
+        redirectTo: ''
+      }
     ]
+  },
+  {
+    path: 'contact',
+    data: {
+      name: 'Contact',
+      icon: 'contact_page',
+    },
+    loadComponent: () => import('./pages/contact/contact.component'),
   },
   {
     path: '**',
