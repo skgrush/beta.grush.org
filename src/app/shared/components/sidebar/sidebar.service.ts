@@ -8,6 +8,7 @@ export interface IRouteTreeNode {
   readonly name: string;
   readonly icon?: string;
   readonly children: IRouteTreeNode[] | null;
+  readonly hasComponent: boolean;
 }
 
 interface IExpectedRoute {
@@ -17,6 +18,8 @@ interface IExpectedRoute {
     hidden?: boolean;
     icon?: string;
   };
+  compponent?: any;
+  loadComponent?: any;
   children?: IExpectedRoute[];
 }
 
@@ -44,6 +47,7 @@ export class SidebarService {
       name: route.data?.['name'] ?? route.path ?? '??',
       icon: route.data?.['icon'],
       children: this.#parseChildren(path, route.children),
+      hasComponent: !!(route.compponent || route.loadComponent),
     };
   }
 

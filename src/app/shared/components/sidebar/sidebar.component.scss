@@ -1,3 +1,8 @@
+:host {
+  display: block;
+  padding: 0.8rem;
+}
+
 ul,
 li {
   margin-top: 0;
@@ -12,11 +17,31 @@ li {
   padding-left: 40px;
 }
 
+mat-icon.node-specific-icon:not(.expander) {
+  padding: 12px;
+}
+
+.mat-tree-node {
+  p {
+    margin: 0;
+  }
+}
+
 /*
  * Padding for leaf nodes.
  * Leaf nodes need to have padding so as to align with other non-leaf nodes
  * under the same parent.
  */
-div[role=group]>.mat-tree-node {
-  padding-left: 40px;
+div[role=group] {
+  display: none;
+
+  &.children-expanded {
+    display: block;
+
+    // animation: 0.3s forwards slideUp;
+  }
+
+  &>.mat-tree-node {
+    // padding-left: 40px;
+  }
 }

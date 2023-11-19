@@ -11,3 +11,5 @@ import { CommonModule } from '@angular/common';
 export class ProjectsComponent {
 
 }
+
+export default ProjectsComponent;

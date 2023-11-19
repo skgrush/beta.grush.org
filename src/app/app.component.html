@@ -1,8 +1,11 @@
-<mat-sidenav-container>
-  <mat-sidenav mode="side" opened>
+<mat-sidenav-container [class.opened]="sidenav.opened">
+  <mat-sidenav #sidenav [mode]="sidenavMode" [(opened)]="sidenavOpened">
     <grush-sidebar />
   </mat-sidenav>
   <mat-sidenav-content>
+    <button class="toggler" mat-mini-fab (click)="sidenav.toggle()">
+      <mat-icon>chevron_right</mat-icon>
+    </button>
     <router-outlet />
   </mat-sidenav-content>
 </mat-sidenav-container>

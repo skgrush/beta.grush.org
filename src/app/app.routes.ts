@@ -16,8 +16,16 @@ export const routes: Routes = [
       name: 'Projects',
       icon: 'inventory_2',
     },
+    // loadComponent: () => import('./pages/projects/projects.component'),
     children: [
-
+      {
+        path: 'cavern-seer',
+        data: {
+          name: 'CavernSeer X',
+          icon: 'golf_course',
+        },
+        children: [],
+      },
     ]
   },
   {
