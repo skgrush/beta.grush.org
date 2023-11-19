@@ -21,10 +21,10 @@ export const routes: Routes = [
       {
         path: 'cavern-seer',
         data: {
-          name: 'CavernSeer X',
+          name: 'CavernSeer',
           icon: 'golf_course',
         },
-        children: [],
+        loadComponent: () => import('./pages/projects/cavern-seer/cavern-seer.component'),
       },
     ]
   },

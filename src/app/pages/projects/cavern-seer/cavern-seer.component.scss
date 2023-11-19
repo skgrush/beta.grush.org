@@ -1,0 +1,16 @@
+:host {
+  display: block;
+}
+
+a mat-icon {
+  vertical-align: middle;
+}
+
+[mat-card-lg-image] {
+
+  a,
+  img {
+    width: 100%;
+    height: 100%;
+  }
+}
