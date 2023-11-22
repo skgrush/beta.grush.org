@@ -21,10 +21,10 @@ export class EmailComponent {
   readonly styleDisplay = 'flex';
 
   get parts() {
-    return this.generateEmailParts(this.user, ...this.domain);
+    return this.#generateEmailParts(this.user, ...this.domain);
   }
 
-  private *generateEmailParts(user: string, ...domainParts: string[]) {
+  *#generateEmailParts(user: string, ...domainParts: string[]) {
     const email = [
       user,
       domainParts.join('.'),

@@ -1,9 +1,10 @@
-<mat-sidenav-container [class.opened]="sidenav.opened">
-  <mat-sidenav #sidenav [mode]="sidenavMode" [(opened)]="sidenavOpened">
+<mat-sidenav-container *ngIf="mode$ | async as mode" [class.opened]="sidenav?.opened">
+  <mat-sidenav #sidenav [mode]="getSidenavMode(mode)" [opened]="getOpened(mode)"
+    (openedChange)="openChanged(mode, $event)">
     <grush-sidebar />
   </mat-sidenav>
   <mat-sidenav-content>
-    <button class="toggler" mat-mini-fab (click)="sidenav.toggle()">
+    <button class="toggler" mat-mini-fab (click)="toggleClick(mode)">
       <mat-icon>chevron_right</mat-icon>
     </button>
     <router-outlet />
