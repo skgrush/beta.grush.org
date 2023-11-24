@@ -12,6 +12,7 @@ export const routes: Routes = [
   },
   {
     path: 'projects',
+    title: 'Projects',
     data: {
       name: 'Projects',
       icon: 'inventory_2',
@@ -20,6 +21,7 @@ export const routes: Routes = [
     children: [
       {
         path: 'cavern-seer',
+        title: 'CavernSeer',
         data: {
           name: 'CavernSeer',
           icon: 'golf_course',
@@ -34,6 +36,7 @@ export const routes: Routes = [
   },
   {
     path: 'contact',
+    title: 'Contact',
     data: {
       name: 'Contact',
       icon: 'contact_page',
