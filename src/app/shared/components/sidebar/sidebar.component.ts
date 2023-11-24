@@ -10,7 +10,7 @@ import { tap } from 'rxjs';
 import { RouterLink, RouterLinkActive } from '@angular/router';
 
 @Component({
-  selector: 'grush-sidebar',
+  selector: 'nav[grush-sidebar]',
   standalone: true,
   imports: [CommonModule, MatTreeModule, MatIconModule, RouterLink, RouterLinkActive, MatButtonModule],
   templateUrl: './sidebar.component.html',

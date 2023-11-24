@@ -1,3 +1,5 @@
+@use 'sass:color';
+
 /* You can add global styles to this file, and also import other style files */
 
 html,
@@ -12,12 +14,15 @@ body {
 
 
 a {
+  $link-color: white;
+
   &:any-link {
-    color: white;
+    color: $link-color;
   }
 
   &:active,
   &.active-link {
-    color: gray;
+    color: color.adjust($link-color, $blackness: 30%);
+    font-style: italic;
   }
 }

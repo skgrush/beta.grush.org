@@ -17,7 +17,7 @@ li {
   padding-left: 1.5em;
 }
 
-mat-icon.node-specific-icon:not(.expander) {
+mat-icon.node-specific-icon {
   padding: 12px;
 }
 
@@ -27,21 +27,44 @@ mat-icon.node-specific-icon:not(.expander) {
   }
 }
 
-/*
- * Padding for leaf nodes.
- * Leaf nodes need to have padding so as to align with other non-leaf nodes
- * under the same parent.
- */
-div[role=group] {
-  display: none;
-
-  &.children-expanded {
-    display: block;
-
-    // animation: 0.3s forwards slideUp;
-  }
-
-  &>.mat-tree-node {
-    // padding-left: 40px;
-  }
+div[role=group].children-expanded {
+  display: block;
 }
+
+
+// Future work: animated expandable sidenav
+// /*
+//  * This padding sets alignment of the nested nodes.
+//  */
+// .mat-nested-tree-node div[role=group] {
+//   padding-left: 1.5em;
+// }
+
+// mat-icon.node-specific-icon :not(.expander) {
+//   padding: 12px;
+// }
+
+// .mat-tree-node {
+//   p {
+//     margin: 0;
+//   }
+// }
+
+// /*
+//  * Padding for leaf nodes.
+//  * Leaf nodes need to have padding so as to align with other non-leaf nodes
+//  * under the same parent.
+//  */
+// div[role=group] {
+//   display: none;
+
+//   &.children-expanded {
+//     display: block;
+
+//     // animation: 0.3s forwards slideUp;
+//   }
+
+//   &>.mat-tree-node {
+//     // padding-left: 40px;
+//   }
+// }
