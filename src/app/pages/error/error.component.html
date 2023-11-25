@@ -1,0 +1,21 @@
+<mat-card>
+  <mat-card-header>
+    <mat-card-title>
+      Error
+    </mat-card-title>
+  </mat-card-header>
+  <mat-card-content *ngIf="error$ | async as error">
+    <dl>
+      <dt>Path</dt>
+      <dd>{{ error.path }}</dd>
+
+      <dt>Message</dt>
+      <dd>{{ error.message }}</dd>
+
+      <ng-container *ngIf="error.details">
+        <dt>Details</dt>
+        <dd>{{ error.details }}</dd>
+      </ng-container>
+    </dl>
+  </mat-card-content>
+</mat-card>

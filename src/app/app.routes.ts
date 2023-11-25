@@ -44,6 +44,14 @@ export const routes: Routes = [
     loadComponent: () => import('./pages/contact/contact.component'),
   },
   {
+    path: 'error',
+    title: 'Error',
+    data: {
+      hidden: true,
+    },
+    loadComponent: () => import('./pages/error/error.component'),
+  },
+  {
     path: '**',
     redirectTo: '',
   },
