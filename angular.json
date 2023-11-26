@@ -29,6 +29,7 @@
             "tsConfig": "tsconfig.app.json",
             "inlineStyleLanguage": "scss",
             "assets": [
+              "src/github",
               "src/favicon.ico",
               "src/apple-touch-icon.png",
               "src/assets"

@@ -1,12 +1,12 @@
 import { createHash } from 'node:crypto';
-import { createReadStream } from 'node:fs';
-import { opendir } from 'node:fs/promises';
+import { opendir, open, FileHandle } from 'node:fs/promises';
 import { join } from 'node:path';
+import { getMimeType } from 'stream-mime-type';
 
-export function getFileHash(path: string, algorithm: string) {
+
+export function getFileHash(fileStream: NodeJS.ReadableStream, algorithm: string) {
   return new Promise<string>((resolve, reject) => {
     const hasher = createHash(algorithm);
-    const fileStream = createReadStream(path);
 
     fileStream.on('data', data => hasher.update(data));
     fileStream.on('end', () => {
@@ -15,6 +15,18 @@ export function getFileHash(path: string, algorithm: string) {
     })
     fileStream.on('error', reject);
   });
+}
+
+export async function getMimeAndHash(file: FileHandle, path: string, algorithm: string) {
+  const fileStream = file.createReadStream();
+
+  const { mime, stream } = await getMimeType(fileStream, {
+    filename: path,
+  });
+
+  const hash = await getFileHash(stream, algorithm);
+
+  return { mime, hash };
 }
 
 export enum WalkResultType {
@@ -29,6 +41,8 @@ export class WalkResult {
     readonly filename: string,
     readonly type: WalkResultType,
     readonly checksum: string,
+    readonly mime: string,
+    readonly size: number,
   ) { }
 }
 
@@ -48,24 +62,32 @@ export async function* walkDirectory(
   options: IWalkOptions,
 ): AsyncGenerator<WalkResult, undefined, undefined> {
 
-  for await (const fd of await opendir(join(base, dirRelPath))) {
-    const entryRelPath = join(dirRelPath, fd.name);
+  for await (const dirEnt of await opendir(join(base, dirRelPath))) {
+    const entryRelPath = join(dirRelPath, dirEnt.name);
 
-    if (fd.isFile()) {
-      const hash = await getFileHash(join(base, entryRelPath), options.hashAlgorithm);
+    if (dirEnt.isFile()) {
+      const fullPath = join(base, entryRelPath);
+      const fileDescriptor = await open(fullPath);
+      const { hash, mime } = await getMimeAndHash(fileDescriptor, fullPath, options.hashAlgorithm);
+      const stat = await fileDescriptor.stat();
+
       yield new WalkResult(
         entryRelPath,
-        fd.name,
+        dirEnt.name,
         WalkResultType.File,
         hash,
+        mime,
+        stat.size,
       );
-    } else if (fd.isDirectory()) {
+    } else if (dirEnt.isDirectory()) {
       if (options.includeDirectories) {
         yield new WalkResult(
           entryRelPath,
-          fd.name,
+          dirEnt.name,
           WalkResultType.Directory,
           '',
+          'inode/directory',
+          0,
         );
       }
 
