@@ -7,7 +7,9 @@ import { walkDirectory } from './hash.js';
 import { CompareType, ComparedItem, compareS3 } from './compare-s3.js';
 import { IMigrateMetadata } from './metadata.interface';
 import minimist from 'minimist';
-import { SyncOperator, SyncResult } from './sync-operator.js';
+import { SyncOperator, SyncResultType } from './sync-operator.js';
+import { catchError, firstValueFrom, forkJoin, map, of, reduce, tap } from 'rxjs';
+import { MigrateProgressBars } from './progress-bars.js';
 
 const __dirname = fileURLToPath(new URL('.', import.meta.url));
 const repoRootPath = normalize(join(__dirname, '../'));
@@ -55,7 +57,7 @@ async function main() {
 
   console.group('Comparisons:');
   for (const [key, val] of allComparisons) {
-    console.info(key, ':', CompareType[val.type], val.localObject?.mime);
+    console.info(key, ':', CompareType[val.type]);
   }
   console.groupEnd();
 
@@ -99,28 +101,36 @@ async function main() {
     argForce,
   ));
 
-  const runs = await Promise.all(operators.map(op => op.runSync()));
+  const progressBars = new MigrateProgressBars(
+    todoComparisons.size,
+    totalSize,
+  );
 
-  const failedRuns = runs.filter(run => run.results.some(r => r === SyncResult.Error));
-  if (failedRuns.length === 0) {
-    console.info('Success!');
-    for (const run of runs) {
-      console.info('Operator', run.operator.operatorId, ':', run.results.filter(r => r === SyncResult.Success).length, 'successes,', run.results.filter(r => r === SyncResult.Noop).length, 'noops');
-    }
-    return true;
+  const run$s = operators.map(
+    op => op.run$().pipe(
+      progressBars.reportSyncResult(),
+      map(result => result.type !== SyncResultType.Error),
+      catchError(() => of(false)),
+      // emit only at the end the cumulative success status
+      reduce((previousSucceeded, thisSucceeded) => previousSucceeded && thisSucceeded, true),
+    ),
+  );
+
+  const allSucceeded = await firstValueFrom(
+    forkJoin(run$s).pipe(map(results => results.every(r => r))),
+  );
+
+  if (allSucceeded) {
+    console.info('\nSuccess! All requests completed successfully.');
+    return;
   }
 
-  if (failedRuns) {
-    console.error('\n\n\nSome operators failed:', failedRuns.length, '/', operators.length, 'failed');
-    for (const run of failedRuns) {
-      console.error('============================');
-      console.error('Operator', run.operator.operatorId, ':', run.results.filter(r => r === SyncResult.Error).length, '/', run.results.length);
-
-      for (const { item, error } of run.operator.getLatestErrors()) {
-        console.error('=========================');
-        console.error('Item:', item);
-        console.error(error);
-      }
+  console.error('\n\nSomething went wrong!\n\n');
+  for (const operator of operators) {
+    for (const { item, error } of operator.getLatestErrors()) {
+      console.error('\n\n###########################')
+      console.error('Item:', item);
+      console.error('Error:', error);
     }
   }
 }
@@ -151,6 +161,7 @@ async function getEnvironment(): Promise<IEnv> {
   const file = await open(path);
 
   const contents = await file.readFile({ encoding: 'utf8' });
+  await file.close();
 
   const json = JSON.parse(contents) as IEnv;
   if (
@@ -172,6 +183,7 @@ async function getMetadata(): Promise<IMigrateMetadata> {
   const file = await open(path);
 
   const contents = await file.readFile({ encoding: 'utf8' });
+  await file.close();
 
   return JSON.parse(contents);
 }

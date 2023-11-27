@@ -1,13 +1,19 @@
 import { DeleteObjectCommand, DeleteObjectCommandOutput, PutObjectCommand, PutObjectCommandOutput, S3Client } from "@aws-sdk/client-s3";
 import { CompareType, ComparedItem } from "./compare-s3.js";
 import { IMigrateMetadata, IMigrateObjectMetadata } from "./metadata.interface";
-import { createReadStream } from "node:fs";
+import { open } from "node:fs/promises";
 import { join } from "node:path";
+import { concatAll, defer, from, map } from "rxjs";
 
-export enum SyncResult {
+export enum SyncResultType {
   Error = 0,
   Success = 1,
   Noop = 2,
+}
+
+export interface ISyncResult {
+  readonly size: number;
+  readonly type: SyncResultType;
 }
 
 export class SyncOperator {
@@ -41,15 +47,19 @@ export class SyncOperator {
     }
   }
 
-  async runSync() {
-    if (this.#runs) {
-      console.error('Attempting to run operator', this.operatorId, 'again, rather than retry(); likely in error');
-    }
-    this.#runs++;
+  run$() {
+    return defer(() => {
+      if (this.#runs) {
+        console.error('Attempting to run operator', this.operatorId, 'again, rather than retry(); likely in error');
+      }
+      this.#runs++;
 
-    const results: SyncResult[] = [];
+      // loop until there are no more comparedItemMap items
+      return from(this.#runAsyncIterator());
+    });
+  }
 
-    // loop until there are no more comparedItemMap items
+  async *#runAsyncIterator() {
     while (true) {
       const keyIterResult = this.comparedItemMap.keys().next();
       if (keyIterResult.done) {
@@ -65,37 +75,31 @@ export class SyncOperator {
 
       // we have exclusive ownership of the item
       const result = await this.#executeTransfer(item);
-      results.push(result);
+      yield result;
     }
-
-    return {
-      operator: this,
-      results,
-    };
   }
 
-  async retry() {
-    ++this.#runs;
-
-    const results: SyncResult[] = [];
-
-    for (const item of this.#errors.keys()) {
-      const result = await this.#executeTransfer(item);
-      if (result) {
-        this.#errors.delete(item);
-      }
-      results.push(result);
-    }
-
-    return {
-      operator: this,
-      results,
-    };
+  retry$() {
+    return from(this.#errors.keys()).pipe(
+      // for each item, construct an observable
+      map(item => defer(async () => {
+        const result = await this.#executeTransfer(item);
+        if (result.type !== SyncResultType.Error) {
+          this.#errors.delete(item);
+        }
+        return result;
+      })
+      ),
+      concatAll(),
+    );
   }
 
-  async #executeTransfer(item: ComparedItem) {
+  async #executeTransfer(item: ComparedItem): Promise<ISyncResult> {
     if (item.type === CompareType.NoChange && !this.force) {
-      return SyncResult.Noop;
+      return {
+        type: SyncResultType.Noop,
+        size: 0,
+      };
     }
 
     const key = item.key;
@@ -114,16 +118,24 @@ export class SyncOperator {
       throw new Error(`Unexpected CompareType value: ${item.type}`);
     }
 
-    return !!result
-      ? SyncResult.Success
-      : SyncResult.Error;
+    if (result) {
+      return {
+        type: SyncResultType.Success,
+        size: item.localObject?.size ?? 0,
+      };
+    } else {
+      return {
+        type: SyncResultType.Error,
+        size: 0,
+      };
+    }
   }
 
   async #put(item: ComparedItem, metadata: IMigrateObjectMetadata | undefined) {
     try {
       const local = item.localObject!;
       const fullPath = join(this.basePath, local.key);
-      const fileStream = createReadStream(fullPath);
+      const fd = await open(fullPath);
 
       // ContentMD5 is b64 while ETag is MD5 (though it may not be MD5 if uploaded via multi)
       const b64md5 = Buffer.from(local.checksum, 'hex').toString('base64');
@@ -134,10 +146,12 @@ export class SyncOperator {
         Key: local.key,
         ContentMD5: b64md5,
         ContentType: local.mime,
-        Body: fileStream,
+        Body: fd.createReadStream(),
       });
 
       const result = await this.client.send(command);
+      await fd.close();
+
       return result;
     } catch (e) {
       this.#addError(item, e);

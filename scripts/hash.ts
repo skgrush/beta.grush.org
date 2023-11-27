@@ -68,8 +68,9 @@ export async function* walkDirectory(
     if (dirEnt.isFile()) {
       const fullPath = join(base, entryRelPath);
       const fileDescriptor = await open(fullPath);
-      const { hash, mime } = await getMimeAndHash(fileDescriptor, fullPath, options.hashAlgorithm);
       const stat = await fileDescriptor.stat();
+      const { hash, mime } = await getMimeAndHash(fileDescriptor, fullPath, options.hashAlgorithm);
+      await fileDescriptor.close();
 
       yield new WalkResult(
         entryRelPath,

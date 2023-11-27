@@ -8,7 +8,7 @@
     "watch": "ng build --watch --configuration development",
     "build-and-serve": "npm run build && npx http-server dist/beta-grush-org/browser",
     "test": "ng test",
-    "migrate": "ts-node --project ./scripts/tsconfig.scripts.json ./scripts/migrate.ts"
+    "migrate": "NODE_OPTIONS='--trace-warnings --trace-deprecation' ts-node --project ./scripts/tsconfig.scripts.json ./scripts/migrate.ts"
   },
   "private": true,
   "type": "module",
@@ -39,6 +39,7 @@
     "@types/express": "^4.17.17",
     "@types/jasmine": "~5.1.0",
     "@types/minimist": "^1.2.5",
+    "@types/multi-progress": "^2.0.6",
     "@types/node": "^18.18.0",
     "jasmine-core": "~5.1.0",
     "karma": "~6.4.0",
@@ -47,6 +48,8 @@
     "karma-jasmine": "~5.1.0",
     "karma-jasmine-html-reporter": "~2.1.0",
     "minimist": "^1.2.8",
+    "multi-progress": "^4.0.0",
+    "progress": "^2.0.3",
     "stream-mime-type": "^2.0.0",
     "typescript": "~5.2.2"
   }
