@@ -8,26 +8,15 @@ import { CompareType, ComparedItem, compareS3 } from './compare-s3.js';
 import { IMigrateMetadata } from './metadata.interface';
 import minimist from 'minimist';
 import { SyncOperator, SyncResultType } from './sync-operator.js';
-import { catchError, firstValueFrom, forkJoin, map, of, reduce, tap } from 'rxjs';
+import { catchError, firstValueFrom, forkJoin, map, of, reduce } from 'rxjs';
 import { MigrateProgressBars } from './progress-bars.js';
+import { IEnv, getEnvironment } from './env.js';
 
 const __dirname = fileURLToPath(new URL('.', import.meta.url));
 const repoRootPath = normalize(join(__dirname, '../'));
 
 if (import.meta.url === pathToFileURL(process.argv[1]).href) {
   void main();
-}
-
-interface ICredentials {
-  readonly accessKeyId: string;
-  readonly secretAccessKey: string;
-}
-
-interface IEnv {
-  readonly credentials: ICredentials;
-  readonly region: string;
-  readonly bucket: string;
-  readonly copySourceRelative: string;
 }
 
 async function main() {
@@ -38,7 +27,7 @@ async function main() {
     force: argForce,
   } = minimist(process.argv.slice(2));
 
-  const env = await getEnvironment();
+  const env = await getEnvironment(join(repoRootPath, './scripts/.env.json'));
   const client = await getClient(env);
 
   const bucketContents = await readFromBucket(env.bucket, client);
@@ -155,28 +144,6 @@ async function getClient(env: IEnv) {
   return client;
 }
 
-
-async function getEnvironment(): Promise<IEnv> {
-  const path = join(repoRootPath, 'scripts/.env.json');
-  const file = await open(path);
-
-  const contents = await file.readFile({ encoding: 'utf8' });
-  await file.close();
-
-  const json = JSON.parse(contents) as IEnv;
-  if (
-    typeof json.credentials === 'object' &&
-    typeof json.credentials.accessKeyId === 'string' &&
-    typeof json.credentials.secretAccessKey === 'string' &&
-    typeof json.region === 'string' &&
-    typeof json.bucket === 'string' &&
-    typeof json.copySourceRelative === 'string'
-  ) {
-    return json;
-  }
-
-  throw new Error(`Failed to read ICredentials from ${JSON.stringify(path)}`);
-}
 
 async function getMetadata(): Promise<IMigrateMetadata> {
   const path = join(repoRootPath, 'scripts/metadata.json');
