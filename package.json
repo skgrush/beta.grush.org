@@ -36,7 +36,7 @@
     "@angular/cli": "^17.0.0",
     "@angular/compiler-cli": "^17.0.0",
     "@aws-sdk/client-s3": "^3.456.0",
-    "@skgrush/sync-s3": "^0.0.1-rc.0",
+    "@skgrush/sync-s3": "^0.0.1-rc.1",
     "@types/express": "^4.17.17",
     "@types/jasmine": "~5.1.0",
     "@types/minimist": "^1.2.5",
